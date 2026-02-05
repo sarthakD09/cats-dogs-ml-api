@@ -24,6 +24,7 @@ def preprocess_image(image):
     image = (image / 127.5) - 1.0   # 🔥 correct for MobileNetV2
 
     image = np.expand_dims(image, axis=0)
+    image = image.astype(input_details[0]['dtype'])
     return image
 
 
