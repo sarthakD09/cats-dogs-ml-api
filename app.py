@@ -21,8 +21,10 @@ output_details = interpreter.get_output_details()
 def preprocess_image(image):
     image = cv2.resize(image, IMG_SIZE)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = preprocess_input(image)
-    image = np.expand_dims(image, axis=0).astype(np.float32)
+
+    image = image.astype(np.float32) / 255.0  # only this
+
+    image = np.expand_dims(image, axis=0)
     return image
 
 
