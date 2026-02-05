@@ -3,6 +3,7 @@ from flask_cors import CORS
 import numpy as np
 import cv2
 from tensorflow import keras
+from keras.applications.mobilenet_v2 import preprocess_input
 
 app = Flask(__name__)
 CORS(app)  # allow Next.js to call this API
@@ -15,11 +16,7 @@ IMG_SIZE = (160, 160)
 def preprocess_image(image):
     image = cv2.resize(image, IMG_SIZE)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-    # save correct debug image
-    debug_img = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imwrite("debug/last_input.jpg", debug_img)
-
+    image = preprocess_input(image)   # 🔥 THIS LINE WAS MISSING
     image = np.expand_dims(image, axis=0)
     return image
 
