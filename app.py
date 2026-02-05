@@ -3,8 +3,6 @@ from flask_cors import CORS
 import numpy as np
 import cv2
 import tensorflow as tf
-from keras.applications.mobilenet_v2 import preprocess_input
-
 app = Flask(__name__)
 CORS(app)
 
@@ -22,7 +20,8 @@ def preprocess_image(image):
     image = cv2.resize(image, IMG_SIZE)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    image = image.astype(np.float32) / 255.0  # only this
+    image = image.astype(np.float32)
+    image = (image / 127.5) - 1.0   # 🔥 correct for MobileNetV2
 
     image = np.expand_dims(image, axis=0)
     return image
