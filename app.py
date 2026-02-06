@@ -20,11 +20,10 @@ def preprocess_image(image):
     image = cv2.resize(image, IMG_SIZE)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    image = image.astype(np.float32)
-    image = (image / 127.5) - 1.0   # 🔥 correct for MobileNetV2
+    # image = image.astype(np.float32)
+    # image = (image / 127.5) - 1.0   # 🔥 correct for MobileNetV2
 
-    image = np.expand_dims(image, axis=0)
-    image = image.astype(input_details[0]['dtype'])
+    image = np.expand_dims(image, axis=0).astype(input_details[0]['dtype'])
     return image
 
 
