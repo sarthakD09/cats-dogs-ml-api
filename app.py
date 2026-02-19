@@ -2,29 +2,56 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
 import cv2
-import tensorflow as tf
+
+from services.smart_pipeline import run_smart_pipeline
+from dotenv import load_dotenv
+load_dotenv()
+
+
 app = Flask(__name__)
-CORS(app)
-
-IMG_SIZE = (160, 160)
-
-# -------- Load TFLite model (very light) --------
-interpreter = tf.lite.Interpreter(model_path="cats_dogs_model.tflite")
-interpreter.allocate_tensors()
-
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
+CORS(
+    app,
+    resources={r"/*": {"origins": ["http://localhost:3000"]}},
+    supports_credentials=True
+)
 
 
-def preprocess_image(image):
-    image = cv2.resize(image, IMG_SIZE)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    # image = image.astype(np.float32)
-    # image = (image / 127.5) - 1.0   # 🔥 correct for MobileNetV2
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
-    image = np.expand_dims(image, axis=0).astype(input_details[0]['dtype'])
-    return image
+
+@app.route("/smart", methods=["POST" ,"OPTIONS"])
+def smart():
+    if "image" not in request.files:
+        return jsonify({"error": "No image provided"}), 400
+
+    file = request.files["image"]
+    npimg = np.frombuffer(file.read(), np.uint8)
+    img = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+
+    if img is None:
+        return jsonify({"error": "Invalid image"}), 400
+
+    result = run_smart_pipeline(img)
+    return jsonify(result)
+
+
+@app.route("/detect", methods=["POST"])
+def detect():
+    if "image" not in request.files:
+        return jsonify({"error": "No image provided"}), 400
+
+    file = request.files["image"]
+    npimg = np.frombuffer(file.read(), np.uint8)
+    img = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+
+    if img is None:
+        return jsonify({"error": "Invalid image"}), 400
+
+    from models.yolo_model import detect_objects
+    detections = detect_objects(img)
+
+    return jsonify({"detections": detections})
 
 
 @app.route("/predict", methods=["POST"])
@@ -39,17 +66,17 @@ def predict():
     if img is None:
         return jsonify({"error": "Invalid image"}), 400
 
-    processed = preprocess_image(img)
+    from models.classifier import classify_animal
+    from services.explainer import generate_explanation
 
-    # -------- TFLite inference --------
-    interpreter.set_tensor(input_details[0]['index'], processed)
-    interpreter.invoke()
-    pred = interpreter.get_tensor(output_details[0]['index'])[0][0]
+    label, confidence = classify_animal(img)
+    explanation = generate_explanation(label, confidence)
 
-    label = "Dog 🐶" if pred > 0.5 else "Cat 🐱"
-    print(pred)
-
-    return jsonify({"prediction": label})
+    return jsonify({
+        "prediction": label,
+        "confidence": round(confidence, 4),
+        "explanation": explanation
+    })
 
 
 if __name__ == "__main__":
