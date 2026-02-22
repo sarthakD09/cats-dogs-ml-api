@@ -8,10 +8,12 @@ from services.explainer import generate_explanation
 def run_smart_pipeline(image):
     
     results = run_yolo(image)
+    print("DETECTIONS:", results)
+    
     animal_box = find_animal_box(results)
 
     if animal_box is not None:
-        x1, y1, x2, y2 = animal_box
+        x1, y1, x2, y2 = map(int, animal_box)
         h, w, _ = image.shape
         x1 = max(0, x1)
         y1 = max(0, y1)

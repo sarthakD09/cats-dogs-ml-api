@@ -1,58 +1,36 @@
 # models/yolo_model.py
-
-from ultralytics import YOLO
-import os
-import torch
-torch.set_grad_enabled(False)
-# Warmup inference (runs once at startup)
-import numpy as np
-dummy = np.zeros((640, 640, 3), dtype=np.uint8)
+from gradio_client import Client, handle_file
+import requests
+import tempfile
+import cv2
 
 
-
-# Load once globally
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-YOLO_PATH = os.path.join(BASE_DIR, "yolov8n.pt")
-
-yolo_model = YOLO(YOLO_PATH)
-yolo_model(dummy)
-
+client = Client("Novion10/yolo_api")
 def run_yolo(image):
-    # """
-    # Run YOLO once and return raw results.
-    # """
-    results = yolo_model(
-        image,
-        imgsz=640,       # controlled resolution
-        conf=0.25,       # ignore weak detections
-        verbose=False    # no console spam
-    )
-    return results
 
-def detect_objects(results):
-    detections = []
+    with tempfile.NamedTemporaryFile(suffix=".jpg") as tmp:
+        cv2.imwrite(tmp.name, image)
 
-    for r in results:
-        for box in r.boxes:
-            cls_id = int(box.cls[0])
-            label = yolo_model.names[cls_id]
-            conf = float(box.conf[0])
+        with open(tmp.name, "rb") as f:
+            result = client.predict(
+            image=handle_file(tmp.name),   # MUST match input name
+            api_name="/detect"             # MUST match function
+        )
 
-            detections.append({
-                "label": label,
-                "confidence": round(conf, 3)
-            })
+    print("HF RESULT:", result)
 
+    return result.get("detections", [])
+
+def detect_objects(detections):
     return detections
 
+def find_animal_box(detections):
+    best = None
+    max_conf = 0
 
-def find_animal_box(results):
-    for r in results:
-        for box in r.boxes:
-            cls_id = int(box.cls[0])
-            label = yolo_model.names[cls_id]
+    for obj in detections:
+        if obj["label"] in ["dog", "cat"] and obj["confidence"] > max_conf:
+            best = obj
+            max_conf = obj["confidence"]
 
-            if label in ["dog", "cat"]:
-                return box.xyxy[0].cpu().numpy().astype(int)
-
-    return None
+    return best["box"] if best else None

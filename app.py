@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
 import cv2
-
+from models.yolo_model import run_yolo, detect_objects
 from services.smart_pipeline import run_smart_pipeline
 from dotenv import load_dotenv
 load_dotenv()
@@ -49,7 +49,9 @@ def detect():
         return jsonify({"error": "Invalid image"}), 400
 
     from models.yolo_model import detect_objects
-    detections = detect_objects(img)
+        
+    detections = run_yolo(img)
+    detections = detect_objects(detections)
 
     return jsonify({"detections": detections})
 

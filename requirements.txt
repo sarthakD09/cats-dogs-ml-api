@@ -7,3 +7,4 @@ python-dotenv
 openai
 gunicorn
 torch
+gradio-client
