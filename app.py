@@ -11,7 +11,14 @@ load_dotenv()
 app = Flask(__name__)
 CORS(
     app,
-    resources={r"/*": {"origins": ["http://localhost:3000"]}},
+    resources={
+        r"/*": {
+            "origins": [
+                "http://localhost:3000",
+                "https://cats-dogs-web-app.vercel.app"
+            ]
+        }
+    },
     supports_credentials=True
 )
 
