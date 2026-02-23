@@ -15,7 +15,7 @@ CORS(
         r"/*": {
             "origins": [
                 "http://localhost:3000",
-                "https://cats-dogs-web-app.vercel.app"
+                "https://ai-cam-app.vercel.app"
             ]
         }
     },
