@@ -26,6 +26,9 @@ CORS(
 
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
+@app.route("/")
+def home():
+    return "Server is alive"
 
 @app.route("/smart", methods=["POST" ,"OPTIONS"])
 def smart():
