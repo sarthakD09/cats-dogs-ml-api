@@ -26,7 +26,7 @@ CORS(
 
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def home():
     return "Server is alive"
 
